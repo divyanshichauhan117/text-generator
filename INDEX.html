@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e8ed;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #333;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .output-box {
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            font-size: 15px;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            border: 2px solid #fcc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e1e8ed;
+        }
+
+        .examples h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .example-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-tag {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .example-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4facfe;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .slider-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Text Generator</h1>
+            <p>Generate creative text using neural networks</p>
+        </div>
+
+        <div class="content">
+            <form id="textForm">
+                <div class="input-group">
+                    <label for="prompt">✨ Enter your prompt:</label>
+                    <input type="text" 
+                           id="prompt" 
+                           class="input-field" 
+                           placeholder="e.g., 'The future of artificial intelligence...'"
+                           required>
+                </div>
+
+                <div class="input-group">
+                    <label for="length">📏 Text length: <span id="lengthValue">80</span> characters</label>
+                    <div class="slider-container">
+                        <input type="range" 
+                               id="length" 
+                               class="slider" 
+                               min="20" 
+                               max="300" 
+                               value="80">
+                        <div class="slider-value" id="lengthDisplay">80</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="temperature">🌡️ Creativity (Temperature): <span id="tempValue">1.0</span></label>
+                    <div class="slider-container">
+                        <input type="range" 
+                               id="temperature" 
+                               class="slider" 
+                               min="0.1" 
+                               max="2.0" 
+                               step="0.1" 
+                               value="1.0">
+                        <div class="slider-value" id="tempDisplay">1.0</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="generateBtn">
+                    🚀 Generate Text
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating text...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="output-section" id="outputSection">
+                <h3>📝 Generated Text:</h3>
+                <div class="output-box" id="output"></div>
+            </div>
+
+            <div class="examples">
+                <h3>💡 Try these examples:</h3>
+                <div class="example-tags">
+                    <button class="example-tag" onclick="setPrompt('the future of')">the future of</button>
+                    <button class="example-tag" onclick="setPrompt('once upon a time')">once upon a time</button>
+                    <button class="example-tag" onclick="setPrompt('artificial intelligence')">artificial intelligence</button>
+                    <button class="example-tag" onclick="setPrompt('in the ocean')">in the ocean</button>
+                    <button class="example-tag" onclick="setPrompt('machine learning')">machine learning</button>
+                    <button class="example-tag" onclick="setPrompt('deep learning')">deep learning</button>
+                </div>
+            </div>
+
+            <div class="stats" id="stats">
+                <h3>🧠 Model Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="vocabSize">-</div>
+                        <div class="stat-label">Vocabulary</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="modelParams">-</div>
+                        <div class="stat-label">Parameters</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="seqLength">-</div>
+                        <div class="stat-label">Sequence Length</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update slider values
+        document.getElementById('length').addEventListener('input', function() {
+            const value = this.value;
+            document.getElementById('lengthValue').textContent = value;
+            document.getElementById('lengthDisplay').textContent = value;
+        });
+
+        document.getElementById('temperature').addEventListener('input', function() {
+            const value = parseFloat(this.value).toFixed(1);
+            document.getElementById('tempValue').textContent = value;
+            document.getElementById('tempDisplay').textContent = value;
+        });
+
+        // Set example prompt
+        function setPrompt(text) {
+            document.getElementById('prompt').value = text;
+            document.getElementById('prompt').focus();
+        }
+
+        // Form submission
+        document.getElementById('textForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const prompt = document.getElementById('prompt').value.trim();
+            const length = parseInt(document.getElementById('length').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('outputSection').style.display = 'none';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        length: length,
+                        temperature: temperature
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('output').textContent = data.generated_text;
+                    document.getElementById('outputSection').style.display = 'block';
+                } else {
+                    throw new Error(data.error);
+                }
+                
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        });
+
+        // Load model statistics
+        async function loadModelStats() {
+            try {
+                const response = await fetch('/model_info');
+                const data = await response.json();
+                
+                if (!data.error) {
+                    document.getElementById('vocabSize').textContent = data.vocab_size;
+                    document.getElementById('modelParams').textContent = data.model_parameters.toLocaleString();
+                    document.getElementById('seqLength').textContent = data.sequence_length;
+                }
+            } catch (error) {
+                console.log('Could not load model stats:', error);
+            }
+        }
+
+        // Load stats on page load
+        window.addEventListener('load', loadModelStats);
+    </script>
+</body>
+</html>
